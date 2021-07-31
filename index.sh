@@ -1,5 +1,5 @@
 #!/bin/sh
-project_dir="/home/administrator/www/cgi/test/"
+project_dir="/git"
 
 ##### Передаем заголовки
 echo "Content-type: text/html"
@@ -40,11 +40,11 @@ cat << EOF
 EOF
 if [ -n "$QUERY_STRING" ]; then
   echo "<div class=\"col-sm-8 col-sm-offset-2 text-center\">"
-  echo "${QUERY_STRING}" | grep --quiet "branch\|commit"
+  echo "${QUERY_STRING}" | grep "^branch=\|^commit=" > /dev/null
   if [ $? = 1 ]; then
     echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> А что за запрос? Я такого не ждал!</div>"
   else
-    echo "${QUERY_STRING}" | grep --quiet "branch"
+    echo "${QUERY_STRING}" | grep "branch=" > /dev/null
     if [ $? = 0 ]; then
       user_request=${QUERY_STRING#branch=}
       user_request=$(echo "${user_request}"| sed 's/\(\s\|;\|&\|{\||\|"\|%\|+\).*$//')
@@ -64,11 +64,18 @@ if [ -n "$QUERY_STRING" ]; then
     if [ -n "$untracked_files" ]; then
       echo "<div class=\"alert alert-warning\">Были найдены неотслеживаемые файлы</br><strong style=\"white-space: pre;\">$untracked_files</strong></div>"
     fi
-    git checkout "$user_request" > /dev/null
+    error="$(git checkout $user_request 2>&1)"
     if [ $? = 1 ]; then
-      echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> Видимо где-то ошибка.</div>"
+      echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
     else
       echo "<div class=\"alert alert-success\">Переключено на <strong>$user_request</strong></div>"
+    fi
+    echo "<div class=\"alert alert-info\">Актуализируем ветку</div>"
+    error="$(git pull origin $user_request 2>&1)"
+    if [ $? = 1 ]; then
+      echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
+    else
+      echo "<div class=\"alert alert-success\">Актуализировано</div>"
     fi
   fi
 cat << EOF
