@@ -47,6 +47,7 @@ if [ -n "$QUERY_STRING" ]; then
     echo "${QUERY_STRING}" | grep "branch=" > /dev/null
     if [ $? = 0 ]; then
       user_request=${QUERY_STRING#branch=}
+			user_request=$(echo "${user_request}"| sed 's!%2F!/!g')
       user_request=$(echo "${user_request}"| sed 's/\(\s\|;\|&\|{\||\|"\|%\|+\).*$//')
       echo "<div class=\"alert alert-info\">Применяем ветку <strong>$user_request</strong></div>"
     else
