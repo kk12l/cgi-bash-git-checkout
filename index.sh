@@ -112,6 +112,8 @@ cat << EOF
                 <a href="$1?branch=${branch_name}">Получить последние изменения текущей ветки</a>
               </h4>
             </div>
+					</div>
+          <div class="panel panel-default">
             <div class="panel-heading list-group-item-warning">
               <h4 class="panel-title">
                 <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
