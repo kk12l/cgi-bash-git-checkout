@@ -94,7 +94,7 @@ cat << EOF
       <div class="col-sm-6 col-sm-offset-3">
         <ul class="list-group">
 EOF
-if [ $branch_name <> "" ]; then
+if [ $branch_name != "" ]; then
 cat << EOF
           <li class="list-group-item list-group-item-info">Текущая ветка:
             <input class="form-control text-center" type="text" value="${branch_name}">
@@ -117,7 +117,7 @@ cat << EOF
         </ul>
         <div class="panel-group" id="accordion">
 EOF
-if [ $branch_name <> "" ]; then
+if [ $branch_name != "" ]; then
 cat << EOF
           <div class="panel panel-default">
             <div class="panel-heading list-group-item-warning">
