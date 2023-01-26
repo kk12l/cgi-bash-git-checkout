@@ -10,7 +10,7 @@ cd "${project_dir}"
 
 ##### Сбор данных
 branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
-branch_name="(ветка без имени)"
+branch_name=""
 branch_name=${branch_name##refs/heads/}
 commit_message="$(git log --format=%B -n1 | tr '\r\n' ' ')"
 commit_hash="$(git rev-parse HEAD)"
@@ -44,18 +44,22 @@ if [ -n "$QUERY_STRING" ]; then
   if [ $? = 1 ]; then
     echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> А что за запрос? Я такого не ждал!</div>"
   else
+    git fetch
     echo "${QUERY_STRING}" | grep "branch=" > /dev/null
     if [ $? = 0 ]; then
       user_request=${QUERY_STRING#branch=}
-			user_request=$(echo "${user_request}"| sed 's!%2F!/!g')
-      user_request=$(echo "${user_request}"| sed 's/\(\s\|;\|&\|{\||\|"\|%\|+\).*$//')
+      user_request=$(echo "${user_request}"| sed 's!%2F!/!g')
+      user_request=$(echo "${user_request}"| sed 's/[^-a-Z0-9_\/]//g')
+      git branch | grep "$user_request" > /dev/null
+      if [ $? = 1 ]; then
+        user_request=""
+      fi
       echo "<div class=\"alert alert-info\">Применяем ветку <strong>$user_request</strong></div>"
     else
       user_request=${QUERY_STRING#commit=}
-      user_request=$(echo "${user_request}"| sed 's/\(\s\|;\|&\|{\||\|"\|%\|+\).*$//')
+      user_request=$(echo "${user_request}"| sed 's/[^a-f0-9]//g')
       echo "<div class=\"alert alert-info\">Сменим комит на <strong>$user_request</strong></div>"
     fi
-    git fetch
     modified_files="$(git ls-files -m)"
     if [ -n "$modified_files" ]; then
       echo "<div class=\"alert alert-warning\">Были найдены измененные файлы, <strong>состояние востановлено</strong></br><strong style=\"white-space: pre;\">$modified_files</strong></div>"
@@ -89,9 +93,15 @@ cat << EOF
     <div class="row">
       <div class="col-sm-6 col-sm-offset-3">
         <ul class="list-group">
+EOF
+if [ $branch_name <> "" ]; then
+cat << EOF
           <li class="list-group-item list-group-item-info">Текущая ветка:
             <input class="form-control text-center" type="text" value="${branch_name}">
           </li>
+EOF
+fi
+cat << EOF
           <li class="list-group-item list-group-item-success">Текущий коммит:
             <input class="form-control text-center" type="text" value="${commit_message}">
           </li>
@@ -106,13 +116,19 @@ cat << EOF
           </li>
         </ul>
         <div class="panel-group" id="accordion">
+EOF
+if [ $branch_name <> "" ]; then
+cat << EOF
           <div class="panel panel-default">
             <div class="panel-heading list-group-item-warning">
               <h4 class="panel-title">
                 <a href="$1?branch=${branch_name}">Получить последние изменения текущей ветки</a>
               </h4>
             </div>
-					</div>
+          </div>
+EOF
+fi
+cat << EOF
           <div class="panel panel-default">
             <div class="panel-heading list-group-item-warning">
               <h4 class="panel-title">
