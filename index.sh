@@ -49,7 +49,7 @@ if [ -n "$QUERY_STRING" ]; then
     if [ $? = 0 ]; then
       user_request=${QUERY_STRING#branch=}
       user_request=$(echo "${user_request}"| sed 's!%2F!/!g')
-      user_request=$(echo "${user_request}"| sed 's/[^-a-Z0-9_\/]//g')
+      user_request=$(echo "${user_request}"| sed 's/[^-a-zA-Z0-9_\/]//g')
       git branch | grep "$user_request" > /dev/null
       if [ $? = 1 ]; then
         user_request=""
