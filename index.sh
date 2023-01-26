@@ -44,6 +44,15 @@ if [ -n "$QUERY_STRING" ]; then
   if [ $? = 1 ]; then
     echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> А что за запрос? Я такого не ждал!</div>"
   else
+    untracked_files="$(git ls-files --others --exclude-standard)"
+    if [ -n "$untracked_files" ]; then
+      echo "<div class=\"alert alert-warning\">Были найдены неотслеживаемые файлы:</br><strong style=\"white-space: pre;\">$untracked_files</strong></div>"
+    fi
+    modified_files="$(git ls-files -m)"
+    if [ -n "$modified_files" ]; then
+      echo "<div class=\"alert alert-warning\"><strong>Локальные изменения сброшены</strong>, так как были найдены измененные файлы:</br><strong style=\"white-space: pre;\">$modified_files</strong></div>"
+      git reset --hard > /dev/null
+    fi
     git fetch
     echo "${QUERY_STRING}" | grep "branch=" > /dev/null
     if [ $? = 0 ]; then
@@ -55,32 +64,29 @@ if [ -n "$QUERY_STRING" ]; then
         user_request=""
       fi
       echo "<div class=\"alert alert-info\">Применяем ветку <strong>$user_request</strong></div>"
+      error="$(git stash && git checkout $user_request 2>&1)"
+      if [ $? = 1 ]; then
+        echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
+      else
+        echo "<div class=\"alert alert-success\">Переключено на <strong>$user_request</strong></div>"
+      fi
+      echo "<div class=\"alert alert-info\">Актуализируем ветку</div>"
+      error="$(git stash && git pull origin $user_request 2>&1)"
+      if [ $? = 1 ]; then
+        echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
+      else
+        echo "<div class=\"alert alert-success\">Актуализировано</div>"
+      fi
     else
       user_request=${QUERY_STRING#commit=}
       user_request=$(echo "${user_request}"| sed 's/[^a-f0-9]//g')
       echo "<div class=\"alert alert-info\">Сменим комит на <strong>$user_request</strong></div>"
-    fi
-    modified_files="$(git ls-files -m)"
-    if [ -n "$modified_files" ]; then
-      echo "<div class=\"alert alert-warning\">Были найдены измененные файлы, <strong>состояние востановлено</strong></br><strong style=\"white-space: pre;\">$modified_files</strong></div>"
-      git reset --hard > /dev/null
-    fi
-    untracked_files="$(git ls-files --others --exclude-standard)"
-    if [ -n "$untracked_files" ]; then
-      echo "<div class=\"alert alert-warning\">Были найдены неотслеживаемые файлы</br><strong style=\"white-space: pre;\">$untracked_files</strong></div>"
-    fi
-    error="$(git stash && git checkout $user_request 2>&1)"
-    if [ $? = 1 ]; then
-      echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
-    else
-      echo "<div class=\"alert alert-success\">Переключено на <strong>$user_request</strong></div>"
-    fi
-    echo "<div class=\"alert alert-info\">Актуализируем ветку</div>"
-    error="$(git stash && git pull origin $user_request 2>&1)"
-    if [ $? = 1 ]; then
-      echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
-    else
-      echo "<div class=\"alert alert-success\">Актуализировано</div>"
+      error="$(git stash && git checkout $user_request 2>&1)"
+      if [ $? = 1 ]; then
+        echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
+      else
+        echo "<div class=\"alert alert-success\">Переключено на <strong>$user_request</strong></div>"
+      fi
     fi
   fi
 cat << EOF
