@@ -69,14 +69,14 @@ if [ -n "$QUERY_STRING" ]; then
     if [ -n "$untracked_files" ]; then
       echo "<div class=\"alert alert-warning\">Были найдены неотслеживаемые файлы</br><strong style=\"white-space: pre;\">$untracked_files</strong></div>"
     fi
-    error="$(git checkout $user_request 2>&1)"
+    error="$(git stach && git checkout $user_request 2>&1)"
     if [ $? = 1 ]; then
       echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
     else
       echo "<div class=\"alert alert-success\">Переключено на <strong>$user_request</strong></div>"
     fi
     echo "<div class=\"alert alert-info\">Актуализируем ветку</div>"
-    error="$(git pull origin $user_request 2>&1)"
+    error="$(git stach && git pull origin $user_request 2>&1)"
     if [ $? = 1 ]; then
       echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
     else
