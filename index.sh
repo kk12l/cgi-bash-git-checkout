@@ -50,8 +50,8 @@ if [ -n "$QUERY_STRING" ]; then
     fi
     modified_files="$(git ls-files -m)"
     if [ -n "$modified_files" ]; then
-      echo "<div class=\"alert alert-warning\"><strong>Локальные изменения сброшены</strong>, так как были найдены измененные файлы:</br><strong style=\"white-space: pre;\">$modified_files</strong></div>"
-      git reset --hard > /dev/null
+      echo "<div class=\"alert alert-warning\"><strong>Локальные изменения отложены в stash</strong>, так как были найдены измененные файлы:</br><strong style=\"white-space: pre;\">$modified_files</strong></div>"
+      git stash > /dev/null
     fi
     git fetch
     echo "${QUERY_STRING}" | grep "branch=" > /dev/null
@@ -59,23 +59,25 @@ if [ -n "$QUERY_STRING" ]; then
       user_request=${QUERY_STRING#branch=}
       user_request=$(echo "${user_request}"| sed 's!%2F!/!g')
       user_request=$(echo "${user_request}"| sed 's/[^-a-zA-Z0-9_\/]//g')
-      git branch | grep "$user_request" > /dev/null
+      git branch -a | grep "$user_request" > /dev/null
       if [ $? = 1 ]; then
+        echo "<div class=\"alert alert-danger\">Ветка не найдена: <strong>$user_request</strong></div>"
         user_request=""
-      fi
-      echo "<div class=\"alert alert-info\">Применяем ветку <strong>$user_request</strong></div>"
-      error="$(git stash && git checkout $user_request 2>&1)"
-      if [ $? = 1 ]; then
-        echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
       else
-        echo "<div class=\"alert alert-success\">Переключено на <strong>$user_request</strong></div>"
-      fi
-      echo "<div class=\"alert alert-info\">Актуализируем ветку</div>"
-      error="$(git stash && git pull origin $user_request 2>&1)"
-      if [ $? = 1 ]; then
-        echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
-      else
-        echo "<div class=\"alert alert-success\">Актуализировано</div>"
+        echo "<div class=\"alert alert-info\">Применяем ветку <strong>$user_request</strong></div>"
+        error="$(git stash && git checkout $user_request 2>&1)"
+        if [ $? = 1 ]; then
+          echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
+        else
+          echo "<div class=\"alert alert-success\">Переключено на <strong>$user_request</strong></div>"
+        fi
+        echo "<div class=\"alert alert-info\">Актуализируем ветку</div>"
+        error="$(git stash && git pull origin $user_request 2>&1)"
+        if [ $? = 1 ]; then
+          echo "<div class=\"alert alert-danger\"><strong>Опаньки...</strong> $error</div>"
+        else
+          echo "<div class=\"alert alert-success\">Актуализировано</div>"
+        fi
       fi
     else
       user_request=${QUERY_STRING#commit=}
@@ -91,7 +93,7 @@ if [ -n "$QUERY_STRING" ]; then
   fi
 cat << EOF
 
-<a href="?" class="btn btn-success btn-lg" role="button">Назад к информации</a>
+<a href="?" class="btn btn-success btn-lg" role="button">Вернутся на главную</a>
 </div>
 EOF
 else
