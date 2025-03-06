@@ -1,4 +1,9 @@
 #!/bin/sh
+
+if [ -n "$SHELL_FLAG" ]; then
+  set $SHELL_FLAG
+fi
+
 project_dir="/git"
 
 ##### Передаем заголовки
